@@ -129,52 +129,45 @@ class PdfSignatureFormFieldHelper extends PdfFormFieldHelper {
   }
 
   /// Builds the signature form field widget.
-  Widget build(BuildContext context, double heightPercentage,
-      {required Function(Offset) onTap}) {
+  Widget build(BuildContext context, double heightPercentage) {
     return Positioned(
       left: bounds.left / heightPercentage,
       top: bounds.top / heightPercentage,
       width: bounds.width / heightPercentage,
       height: bounds.height / heightPercentage,
-      child: Listener(
-        onPointerUp: (PointerUpEvent event) {
-          onTap(event.localPosition.translate(
-              bounds.left / heightPercentage, bounds.top / heightPercentage));
-        },
-        child: PdfSignature(
-            bounds: bounds,
-            heightPercentage: heightPercentage,
-            signature: signatureFormField.signature,
-            readOnly: signatureFormField.readOnly,
-            fillColor: pdfSignatureField.backColor.isEmpty
-                ? const Color.fromARGB(255, 221, 228, 255)
-                : Color.fromRGBO(
-                    pdfSignatureField.backColor.r,
-                    pdfSignatureField.backColor.g,
-                    pdfSignatureField.backColor.b,
-                    1),
-            borderColor: pdfSignatureField.borderColor.isEmpty
-                ? Colors.transparent
-                : Color.fromRGBO(
-                    pdfSignatureField.borderColor.r,
-                    pdfSignatureField.borderColor.g,
-                    pdfSignatureField.borderColor.b,
-                    1),
-            borderWidth: pdfSignatureField.borderWidth / heightPercentage,
-            onValueChanged: invokeValueChanged,
-            onSignatureFieldTapDown: (TapDownDetails details) {
-              if (signatureFormField.readOnly) {
-                return;
-              }
-              _onSignatureFieldTapDown();
-            },
-            onSignatureFieldTapUp: (TapUpDetails details) {
-              if (signatureFormField.readOnly || !canShowSignaturePadDialog) {
-                return;
-              }
-              _onSignatureFieldTapUp(context, details, heightPercentage);
-            }),
-      ),
+      child: PdfSignature(
+          bounds: bounds,
+          heightPercentage: heightPercentage,
+          signature: signatureFormField.signature,
+          readOnly: signatureFormField.readOnly,
+          fillColor: pdfSignatureField.backColor.isEmpty
+              ? const Color.fromARGB(255, 221, 228, 255)
+              : Color.fromRGBO(
+                  pdfSignatureField.backColor.r,
+                  pdfSignatureField.backColor.g,
+                  pdfSignatureField.backColor.b,
+                  1),
+          borderColor: pdfSignatureField.borderColor.isEmpty
+              ? Colors.transparent
+              : Color.fromRGBO(
+                  pdfSignatureField.borderColor.r,
+                  pdfSignatureField.borderColor.g,
+                  pdfSignatureField.borderColor.b,
+                  1),
+          borderWidth: pdfSignatureField.borderWidth / heightPercentage,
+          onValueChanged: invokeValueChanged,
+          onSignatureFieldTapDown: (TapDownDetails details) {
+            if (signatureFormField.readOnly) {
+              return;
+            }
+            _onSignatureFieldTapDown();
+          },
+          onSignatureFieldTapUp: (TapUpDetails details) {
+            if (signatureFormField.readOnly || !canShowSignaturePadDialog) {
+              return;
+            }
+            _onSignatureFieldTapUp(context, details, heightPercentage);
+          }),
     );
   }
 }
@@ -329,73 +322,73 @@ void _showSignaturePadDialog(
   _isSignatureDrawn = false;
   final SfLocalizations localizations = SfLocalizations.of(context);
   final ThemeData themeData = Theme.of(context);
+
   showDialog<Widget>(
     barrierDismissible: false,
     context: context,
     builder: (BuildContext context) {
-      return LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-        final double signaturePadWidth = kIsDesktop
-            ? max(constraints.maxWidth, constraints.maxHeight) * 0.25
-            : MediaQuery.of(context).size.width < kSignaturePadWidth
-                ? MediaQuery.of(context).size.width
-                : kSignaturePadWidth;
-        final double signaturePadHeight =
-            kIsDesktop ? signaturePadWidth * 0.6 : kSignaturePadHeight;
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return AlertDialog(
-              insetPadding: const EdgeInsets.all(12.0),
-              shape: isMaterial3
-                  ? RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28.0))
-                  : null,
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Text(
-                    localizations.pdfSignaturePadDialogHeaderTextLabel,
-                    style: isMaterial3
-                        ? Theme.of(context).textTheme.bodyLarge!.copyWith(
-                              fontSize: 24,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            )
-                        : Theme.of(context).textTheme.titleMedium!.copyWith(
-                              fontSize: 16,
-                              fontFamily: 'Roboto-Medium',
-                              color: Theme.of(context).brightness ==
-                                      Brightness.light
-                                  ? Colors.black.withOpacity(0.87)
-                                  : Colors.white.withOpacity(0.87),
-                            ),
-                  ),
-                  InkWell(
-                    //ignore: sdk_version_set_literal
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      if (signatureFieldHelper.onFocusChange != null) {
-                        signatureFieldHelper.onFocusChange!(
-                            PdfFormFieldFocusChangeDetails(
-                                signatureFieldHelper.signatureFormField,
-                                false));
-                      }
-                    },
-                    borderRadius:
-                        isMaterial3 ? BorderRadius.circular(20.0) : null,
-                    child: isMaterial3
-                        ? const SizedBox.square(
-                            dimension: 40, child: Icon(Icons.clear, size: 24))
-                        : const Icon(Icons.clear, size: 24.0),
-                  )
-                ],
-              ),
-              titlePadding: isMaterial3
-                  ? const EdgeInsets.only(
-                      left: 24.0, top: 16.0, right: 16.0, bottom: 16)
-                  : const EdgeInsets.all(16.0),
-              content: SingleChildScrollView(
-                child: SizedBox(
-                  width: signaturePadWidth,
+      // Usa MediaQuery per ottenere le dimensioni dello schermo
+      final double screenWidth = MediaQuery.of(context).size.width;
+      final double screenHeight = MediaQuery.of(context).size.height;
+
+      // Imposta le dimensioni del pad di firma
+      final double signaturePadWidth = screenWidth * 0.9;
+      final double signaturePadHeight = screenHeight * 0.4;
+
+      return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+          return AlertDialog(
+            // Riduci l'inset padding per riempire quasi tutto lo schermo
+            insetPadding: const EdgeInsets.all(24.0),
+            shape: isMaterial3
+                ? RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28.0))
+                : null,
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text(
+                  localizations.pdfSignaturePadDialogHeaderTextLabel,
+                  style: isMaterial3
+                      ? Theme.of(context).textTheme.bodyLarge!.copyWith(
+                            fontSize: 24,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          )
+                      : Theme.of(context).textTheme.titleMedium!.copyWith(
+                            fontSize: 16,
+                            fontFamily: 'Roboto-Medium',
+                            color:
+                                Theme.of(context).brightness == Brightness.light
+                                    ? Colors.black.withOpacity(0.87)
+                                    : Colors.white.withOpacity(0.87),
+                          ),
+                ),
+                InkWell(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    if (signatureFieldHelper.onFocusChange != null) {
+                      signatureFieldHelper.onFocusChange!(
+                          PdfFormFieldFocusChangeDetails(
+                              signatureFieldHelper.signatureFormField, false));
+                    }
+                  },
+                  borderRadius:
+                      isMaterial3 ? BorderRadius.circular(20.0) : null,
+                  child: isMaterial3
+                      ? const SizedBox.square(
+                          dimension: 40, child: Icon(Icons.clear, size: 24))
+                      : const Icon(Icons.clear, size: 24.0),
+                )
+              ],
+            ),
+            titlePadding: isMaterial3
+                ? const EdgeInsets.only(
+                    left: 24.0, top: 16.0, right: 16.0, bottom: 16)
+                : const EdgeInsets.all(16.0),
+            content: SingleChildScrollView(
+              child: SizedBox(
+                width: signaturePadWidth,
+                child: SingleChildScrollView(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
@@ -458,89 +451,87 @@ void _showSignaturePadDialog(
                   ),
                 ),
               ),
-              contentPadding: isMaterial3
-                  ? const EdgeInsets.symmetric(horizontal: 24.0)
-                  : const EdgeInsets.symmetric(horizontal: 12.0),
-              actionsPadding: isMaterial3
-                  ? const EdgeInsets.all(24)
-                  : const EdgeInsets.all(8.0),
-              buttonPadding: EdgeInsets.zero,
-              actions: <Widget>[
-                TextButton(
-                  onPressed: !_isSignatureDrawn
-                      ? null
-                      : () {
-                          _handleSignatureClearButtonPressed();
-                          setState(() {
-                            _isSignatureDrawn = false;
-                          });
-                        },
-                  style: isMaterial3
-                      ? TextButton.styleFrom(
-                          fixedSize: const Size(double.infinity, 40),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20.0),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20.0, vertical: 10),
-                        )
-                      : null,
-                  child: Text(
-                    localizations.pdfSignaturePadDialogClearLabel,
-                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                          fontSize: 14,
-                          fontWeight: isMaterial3 ? FontWeight.w500 : null,
-                          fontFamily: 'Roboto-Medium',
-                          color: themeData.colorScheme.primary,
+            ),
+            contentPadding: isMaterial3
+                ? const EdgeInsets.symmetric(horizontal: 24.0)
+                : const EdgeInsets.symmetric(horizontal: 12.0),
+            actionsPadding: isMaterial3
+                ? const EdgeInsets.all(24)
+                : const EdgeInsets.all(8.0),
+            buttonPadding: EdgeInsets.zero,
+            actions: <Widget>[
+              TextButton(
+                onPressed: !_isSignatureDrawn
+                    ? null
+                    : () {
+                        _handleSignatureClearButtonPressed();
+                        setState(() {
+                          _isSignatureDrawn = false;
+                        });
+                      },
+                style: isMaterial3
+                    ? TextButton.styleFrom(
+                        fixedSize: const Size(double.infinity, 40),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20.0),
                         ),
-                  ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20.0, vertical: 10),
+                      )
+                    : null,
+                child: Text(
+                  localizations.pdfSignaturePadDialogClearLabel,
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        fontSize: 14,
+                        fontWeight: isMaterial3 ? FontWeight.w500 : null,
+                        fontFamily: 'Roboto-Medium',
+                        color: themeData.colorScheme.primary,
+                      ),
                 ),
-                const SizedBox(width: 8.0),
-                TextButton(
-                  onPressed: !_isSignatureDrawn
-                      ? null
-                      : () {
-                          _handleSignatureSaveButtonPressed(
-                              signatureFieldHelper);
-                          Navigator.of(context).pop();
-                          if (signatureFieldHelper.onFocusChange != null) {
-                            signatureFieldHelper.onFocusChange!(
-                                PdfFormFieldFocusChangeDetails(
-                                    signatureFieldHelper.signatureFormField,
-                                    false));
-                          }
-                        },
-                  style: isMaterial3
-                      ? ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          disabledBackgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20.0),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20.0, vertical: 10),
-                          fixedSize: const Size(double.infinity, 40),
-                        )
-                      : null,
-                  child: Text(
-                    localizations.pdfSignaturePadDialogSaveLabel,
-                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                          fontSize: 14,
-                          fontWeight: isMaterial3 ? FontWeight.w500 : null,
-                          color: isMaterial3
-                              ? themeData.colorScheme.onPrimary
-                              : themeData.colorScheme.primary,
-                          fontFamily: 'Roboto-Medium',
+              ),
+              const SizedBox(width: 8.0),
+              TextButton(
+                onPressed: !_isSignatureDrawn
+                    ? null
+                    : () {
+                        _handleSignatureSaveButtonPressed(signatureFieldHelper);
+                        Navigator.of(context).pop();
+                        if (signatureFieldHelper.onFocusChange != null) {
+                          signatureFieldHelper.onFocusChange!(
+                              PdfFormFieldFocusChangeDetails(
+                                  signatureFieldHelper.signatureFormField,
+                                  false));
+                        }
+                      },
+                style: isMaterial3
+                    ? ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        disabledBackgroundColor:
+                            Theme.of(context).colorScheme.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20.0),
                         ),
-                  ),
-                )
-              ],
-            );
-          },
-        );
-      });
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20.0, vertical: 10),
+                        fixedSize: const Size(double.infinity, 40),
+                      )
+                    : null,
+                child: Text(
+                  localizations.pdfSignaturePadDialogSaveLabel,
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        fontSize: 14,
+                        fontWeight: isMaterial3 ? FontWeight.w500 : null,
+                        color: isMaterial3
+                            ? themeData.colorScheme.onPrimary
+                            : themeData.colorScheme.primary,
+                        fontFamily: 'Roboto-Medium',
+                      ),
+                ),
+              )
+            ],
+          );
+        },
+      );
     },
   );
 }
